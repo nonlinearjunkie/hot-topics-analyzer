@@ -1,0 +1,10 @@
+{
+    "openai": {
+        "API-KEY": "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",
+        "model_name": "gpt-3.5-turbo"
+    },
+    "world-news-api": {
+        "API-KEY": "b3a18d159b3a418999a1693f039d4f6f",
+        "BASE_URL": "https://api.worldnewsapi.com"
+    }
+}
