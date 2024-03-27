@@ -1,9 +1,9 @@
 from openai import OpenAI
 
-from utils.rpc import RPC
-from utils import utils
+from src.utils.rpc import RPC
+from src.utils import utils
 
-CONFIG_JSON_FILE_PATH = "../config.json"
+CONFIG_JSON_FILE_PATH = "config.json"
 
 config_dict = utils.read_json(CONFIG_JSON_FILE_PATH)
 WORLD_NEWS_API_BASE_URL = config_dict.get("world-news-api").get("BASE_URL")
