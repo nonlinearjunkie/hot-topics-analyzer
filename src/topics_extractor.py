@@ -1,6 +1,5 @@
-from openai import OpenAI
-
 from src.utils.rpc import RPC
+from src.utils.llm import LLM
 from src.utils import utils
 
 CONFIG_JSON_FILE_PATH = "config.json"
@@ -22,18 +21,10 @@ class GatherNewsException(Exception):
     def __init__(self, location):
         super().__init__(f"Unable to gather news items of the location:{location}")
 
-
-class OpenAIException(Exception):
-
-     def __init__(self):
-        super().__init__("Failed to fetch response from OpenAI API.")
-
-
 class ListTopicsException(Exception):
 
      def __init__(self, location):
         super().__init__(f"Unable to list trending topics of the location:{location}")        
-
 
 
 class TopicsExtractor:
@@ -49,9 +40,8 @@ class TopicsExtractor:
         self.news_number = news_number
         self.radius_in_km = radius_in_km
         self.rpc = RPC(WORLD_NEWS_API_BASE_URL)
-        self.openai_client = OpenAI(
-            api_key=OPENAI_API_KEY,
-            )
+        self.openai_client= LLM(OPENAI_MODEL_NAME, OPENAI_API_KEY)
+        
        
 
     def get_latitude_longitude(self):
@@ -121,20 +111,6 @@ class TopicsExtractor:
 
         return prompt
     
-    def get_chat_completion(self,prompt):
-
-        messages = [{"role": "user", "content": prompt}]
-        try:
-            response = self.openai_client.chat.completions.create(
-                model=OPENAI_MODEL_NAME,
-                messages=messages,
-                temperature=0,
-            )
-        except:
-            raise OpenAIException    
-
-        return response.choices[0].message.content
-    
 
     def get_top_5_trending_topics(self):
 
@@ -144,7 +120,7 @@ class TopicsExtractor:
 
         prompt=self.make_prompt(news_titles)
         try:
-            openai_resp = self.get_chat_completion(prompt)
+            openai_resp = self.openai_client.get_chat_completion(prompt)
         except:
             raise ListTopicsException(self.city_name)    
 
