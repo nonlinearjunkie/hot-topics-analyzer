@@ -14,6 +14,12 @@ class TopicAnalysisException(Exception):
             f"Unable to generate analysis report for the topic:{topic_name}"
         )
 
+class DiscussionAnalysisException(Exception):
+    def __init__(self, discussion_title):
+        super().__init__(
+            f"Unable to generate analysis report for the discussion with title:{discussion_title}"
+        )        
+
 class OpenAIResponseFormatError(Exception):
     def __init__(self):
         super().__init__(
@@ -41,6 +47,7 @@ class InformationAnalyzer:
             json_data = json.loads(json_substring)  
     
         else:
+            print(openai_response)
             raise OpenAIResponseFormatError
 
         return json_data    
@@ -65,32 +72,58 @@ class InformationAnalyzer:
         return prompt
     
 
+    def make_discussion_summarizer_prompt(self, discussion_title, discussion_information):
+
+        prompt = f""" 
+                    I have collected data of discussions happening on social media. 
+                    The discussion points, listed below inside double-back ticks, refer to the content of a post with the title {discussion_title} and comments made by various individuals in the post.
+                    The discussion points are :
+                    ``
+                    {discussion_information}
+
+                    ``
+                    I want you to summarize the information in not more than 100 words of the discussion incluiding information from all discusion points.
+                    Please do not include any other information besides summary like the json file contains....., and so on. The summary you generated 
+                    will be shown as a summary directly to the stakeholders.
+                """
+
+        return prompt
+    
+
     def make_discussion_sentiment_summary_prompt(
         self, topic_name, discussion_title, discussion_string
     ):
 
-        prompt = f"""
-            I have collected discussion points from various individuals on the topic {topic_name}. The discussion points refer to the content of a post with the title
+
+        prompt = f''' 
+        You are an AI assistant to classify sentiment of discussion points from various individuals on the topic {topic_name} and then calculate percentage of
+        discussion point with specific sentiment.
+        I want you to generate a report that analyzes the sentiment of these discussion points regarding the topic **{topic_name}**. Classify the sentiment of each discussion point as either positive, negative, or neutral. 
+        The discussion points refer to the content of a post with the title
             {discussion_title} on social media and comments made on the given post. The discussion points are listed below inside double-back ticks.
             ``
             {discussion_string}
             ``
-            I want you to generate a report that contains information about what percentage of discussion points have positive sentiment for the topic {topic_name}, 
-            what percentage of discussion points have negative sentiment for the topic {topic_name}, and what percentage of discussion points have neutral sentiment for the topic {topic_name}.]
-            The output response must strictly adhere to the following JSON schema inside triple backticks.
-            ```
-            {{
-                "positive_percentage":pos_percentage, 
-                "negative_percentage":neg_percentage,
-                "neutral_percentage":neut_percentage
-            }}
-            ```
 
-            In the output response JSON schema, pos_percentage represents the percentage of discussion points having positive sentiment, neg_percentage represents the percentage of discussion points having negative sentiment,
-            and neut_percentage represents the percentage of discussion points having neutral sentiment. Also try to make sure each percentage is rounded to
-            nearest integer. The output response must only contain JSON document so that it can be used directly by other piece of code.
-        """
+        **Sentiment Classification Guidelines:**
 
+        * **Positive:** The discussion point expresses a favorable opinion or view on the topic.
+        * **Negative:** The discussion point expresses an unfavorable opinion or view on the topic.
+        * **Neutral:** The discussion point does not express a clear opinion or view on the topic, or it presents both positive and negative aspects with equal weight.
+
+        **Output Format:**
+
+        The output response should be a JSON document adhering to the following schema:
+
+        json
+        {{
+          "positive_percentage": *pos_percentage*,
+          "negative_percentage": *neg_percentage*,
+          "neutral_percentage": *neut_percentage*
+        }}
+         Also try to make sure each percentage is rounded to nearest integer.
+        '''
+        
         return prompt
 
 
@@ -130,6 +163,31 @@ class InformationAnalyzer:
             topic_report["discussions"].append(discussion_report)
             
         return topic_report
+    
+
+    def generate_discussion_analysis_report(self, topic_info_path):
+
+        discussion_report = {}
+        topic_information = utils.read_json(topic_info_path)
+
+        for discussion in topic_information:
+            discussion_title = discussion.get("title")
+            discussion_points = discussion.get("discussion_points")
+            discussion_string = ''
+            for i,discussion_point in enumerate(discussion_points, start=1):
+                discussion_point = discussion_point.encode('utf-8', 'replace').decode()
+                discussion_string+=f"{i}. {discussion_point} \n"
+            discussion_summary_prompt = self.make_discussion_summarizer_prompt(discussion_title, discussion_string)
+            try:
+                openai_resp = self.openai_client.get_chat_completion(discussion_summary_prompt)
+            except:
+                raise DiscussionAnalysisException(discussion_title)
+            
+            print(openai_resp)
+            print('*'*50)
+
+
+
             
 
 
