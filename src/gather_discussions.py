@@ -48,14 +48,23 @@ class GatherDiscussions:
             return self.build_comment_chain(parent, chain)
 
         return chain
+    
+    def get_summarize_prompt(self, text):
+        return f'''
+        Summarize the text enclosed in double back ticks below. 
+        ``
+        {text}
+        ``
+        The summarized output response should have 40 words at maximum.
+        '''
 
     def get_all_comment_chains(self, submission):
         """Get all comment chains for a submission, ignoring chains with deleted comments."""
         submission.comments.replace_more(limit=None)  # Load all comments
         all_chains = []
         for comment in submission.comments.list():
-            # collect a maximmum of 50 comments from each submission
-            if len(all_chains) > 50:
+            # collect a maximmum of 10 comments from each submission
+            if len(all_chains) > 10:
                 break
             if isinstance(comment, praw.models.MoreComments):
                 continue
@@ -91,29 +100,39 @@ class GatherDiscussions:
         all the comments preceding the last comment in comment chain and the post content for maintaining the context of the last comment. 
         Please ignore the phrases like 'Based on the comments provided, it seems like', 'The viewpoint of the last comment in the comment chain is', etc. in the response.
         I want the sentence representing viewpoint only in the response. I will be using the viewpoint for further analysis, so please ignore unnecessary phrases in the response.
+        Restrict the length of response to 20 words.
 
         """
 
         return prompt
 
-    def gather_discussions(self, keyword):
+    def gather_discussions(self, keyword, limit=5):
         discussions = []
+        submission_count=0
         for submission in self.reddit.subreddit("all").search(keyword, limit=10):
+
+            if(submission_count)>limit:
+                break
 
             if submission.selftext:
                 submission_details = {}
-                print(f"Title: {submission.title}")
-                print(f"Content:{submission.selftext}")
 
                 submission_details["title"] = submission.title
                 submission_details["discussion_points"] = []
-                submission_details["discussion_points"].append(submission.selftext)
+                if (len(submission.selftext)>500):
+                    post_summarizer_prompt = self.get_summarize_prompt(submission.selftext)
+                    try:
+                        post_content = self.openai_client.get_chat_completion(post_summarizer_prompt)
+                    except:
+                        raise GatherDiscussionException()
+                else:
+                    post_content=  submission.selftext 
 
-                print("Comments:")
+                submission_details["discussion_points"].append(post_content)
+
                 comment_chains = self.get_all_comment_chains(submission)
                 for comment_chain in comment_chains:
-                    print(comment_chain)
-                    print("")
+        
                     prompt = self.generate_comment_prompt(
                         submission.title, submission.selftext, comment_chain
                     )
@@ -125,5 +144,7 @@ class GatherDiscussions:
                     submission_details["discussion_points"].append(openai_resp)
 
                 discussions.append(submission_details)
+
+                submission_count+=1
 
         return discussions

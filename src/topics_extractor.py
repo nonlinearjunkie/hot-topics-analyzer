@@ -1,3 +1,5 @@
+import json
+
 from src.utils.rpc import RPC
 from src.utils.llm import LLM
 from src.utils import utils
@@ -119,6 +121,6 @@ class TopicsExtractor:
 
         lines = openai_resp.split("\n")
         for line in lines:
-            topics.append(line[3:])
+            topics.append(json.loads(line[3:]))
 
         return topics

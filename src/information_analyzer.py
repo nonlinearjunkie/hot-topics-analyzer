@@ -44,13 +44,36 @@ class InformationAnalyzer:
 
         if match:
             json_substring = match.group(0)
-            json_data = json.loads(json_substring)  
+            try:
+                json_data = json.loads(json_substring) 
+            except:
+                raise OpenAIResponseFormatError     
     
         else:
             print(openai_response)
             raise OpenAIResponseFormatError
 
-        return json_data    
+        return json_data
+    
+
+    def extract_cluster_info_from_openai_response(self, openai_response):
+
+        pattern = r'{[^{}]*}'
+
+        matches = re.findall(pattern, openai_response, re.DOTALL)
+
+        if matches:
+            extracted_json = matches[0]
+            try: 
+                extracted_json = json.loads(extracted_json)
+            except:
+                raise OpenAIResponseFormatError   
+        else:
+            print(openai_response)
+            raise OpenAIResponseFormatError 
+
+        return extracted_json
+      
 
     def make_topic_summarizer_prompt(self, topic_name, topic_information):
 
@@ -98,7 +121,7 @@ class InformationAnalyzer:
         prompt = f''' 
         You are an AI assistant to classify sentiment of discussion points from various individuals on the topic {topic_name} and then calculate percentage of
         discussion point with specific sentiment.
-        I want you to generate a report that analyzes the sentiment of these discussion points regarding the topic **{topic_name}**. Classify the sentiment of each discussion point as either positive, negative, or neutral. 
+        I want you to generate a report that analyzes the sentiment of these discussion points. Classify the sentiment of each discussion point as either positive, negative, or neutral. 
         The discussion points refer to the content of a post with the title
             {discussion_title} on social media and comments made on the given post. The discussion points are listed below inside double-back ticks.
             ``
@@ -204,10 +227,10 @@ class InformationAnalyzer:
 
     def generate_discussion_analysis_report(self, topic_info_path):
 
-        discussion_report = {}
         topic_information = utils.read_json(topic_info_path)
-
+        all_discussion_reports={}
         for discussion in topic_information:
+            discussion_report = {}
             discussion_title = discussion.get("title")
             discussion_points = discussion.get("discussion_points")
             discussion_string = ''
@@ -223,13 +246,16 @@ class InformationAnalyzer:
             discussion_cluster_summary_prompt = self.make_discussion_cluster_summary_prompt(discussion_title, discussion_string)
             try:
                 cluster_summary = self.openai_client.get_chat_completion(discussion_cluster_summary_prompt)
+                cluster_summary = self.extract_cluster_info_from_openai_response(cluster_summary)
             except:
                 raise DiscussionAnalysisException(discussion_title)
             
             discussion_report["summary"]=discussion_summary
-            discussion_report["clusters"]=json.loads(cluster_summary)
+            discussion_report["clusters"]=cluster_summary
 
-            print(discussion_report)
+            all_discussion_reports[discussion_title]=discussion_report
+
+        return all_discussion_reports    
 
 
 
