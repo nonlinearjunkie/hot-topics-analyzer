@@ -123,6 +123,43 @@ class InformationAnalyzer:
         }}
          Also try to make sure each percentage is rounded to nearest integer.
         '''
+
+        return prompt
+    
+
+    def make_discussion_cluster_summary_prompt(
+        self,  discussion_title, discussion_string
+    ):
+
+
+        prompt = f''' 
+        You are an AI assistant to group similair discussion points from various individuals into clusters on the post with title {discussion_title}, represent each cluster with a 
+        description in single sentence that captures essence of all the discussion points in that cluster  and then determine number of discussion points in each cluster.
+        
+        I want you to generate a report that conatins a sentence that captures essence of all discussion points, grouped into a cluster, sharing a common viewpoint, 
+        and count of discussion points in each cluster.
+        The discussion points refer to the content of a post with the title
+        {discussion_title} on social media and comments made on the given post. The discussion points are listed below inside double-back ticks.
+            ``
+            {discussion_string}
+            ``
+
+        **Cluster Formation guidelines:**
+
+        * If two discussion points share common viewpoint, place them in same cluster.
+        * Form a maximmum of 5 clusters of discussion points.
+        * Represent each cluster with a sentence that represents common viewpoint of all the discussion points in the cluster.
+
+        **Output Format:**
+
+        The output response should be a JSON document adhering strictly to the following schema:
+
+        json
+        {{
+          *sentence that represents common viewpoint of all the discussion points in a cluster*: *number of discussions in the cluster*
+        }}
+        The output json must contain number of elements equal to number of clusters, where each cluster represents each cluster.
+        '''
         
         return prompt
 
@@ -179,12 +216,20 @@ class InformationAnalyzer:
                 discussion_string+=f"{i}. {discussion_point} \n"
             discussion_summary_prompt = self.make_discussion_summarizer_prompt(discussion_title, discussion_string)
             try:
-                openai_resp = self.openai_client.get_chat_completion(discussion_summary_prompt)
+                discussion_summary = self.openai_client.get_chat_completion(discussion_summary_prompt)
             except:
                 raise DiscussionAnalysisException(discussion_title)
             
-            print(openai_resp)
-            print('*'*50)
+            discussion_cluster_summary_prompt = self.make_discussion_cluster_summary_prompt(discussion_title, discussion_string)
+            try:
+                cluster_summary = self.openai_client.get_chat_completion(discussion_cluster_summary_prompt)
+            except:
+                raise DiscussionAnalysisException(discussion_title)
+            
+            discussion_report["summary"]=discussion_summary
+            discussion_report["clusters"]=json.loads(cluster_summary)
+
+            print(discussion_report)
 
 
 
