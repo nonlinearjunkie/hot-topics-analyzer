@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trending Topics by City</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <h2>Trending Topics Analyzer</h2>
+            <p>Enter City Name:</p>
+            <input type="text" id="cityInput" placeholder="City name">
+            <div>
+                <button id="fetchButton">Fetch Topics</button>
+            </div>
+            <div id="dropdownContainer" class="hidden">
+                <select id="trendingTopicsDropdown">
+                    <option>Select a topic</option>
+                </select>
+            </div>
+
+            <p id="noTopicsMessage" class="hidden">No topics found.</p>
+            <div>
+                <button id="detailsButton" class="hidden">Show Topic Details</button>
+            </div>
+
+            <div id="topicDetails" class="hidden">
+                <h2 id="topicTitle"></h2>
+
+                <h3>Topic Discussion Summary</h3>
+                <h3 id="topicTitle"></h3>
+                <p id="topicSummary"></p>
+                <h3>Discussion Topics</h3>
+                <div id="discussionsContainer"></div>
+            </div>
+
+
+        </div>
+    </div>
+    <script src="js/script.js"></script>
+</body>
+
+</html>
