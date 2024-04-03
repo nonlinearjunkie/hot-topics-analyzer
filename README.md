@@ -9,6 +9,44 @@ For each of the discussion groups(positive, negative and neutral), we will then 
 
 Finally, we will develop a dashboard to view the analysis done above.
 
+## Approach:
+
+### Task-1 (Topics Extraction):
+I have used following steps to extract top 5 trending topics in a city:
+
+1. Geolocation Fetching: Converts the city name into geographical coordinates (latitude and longitude) by making an API request to a geolocation endpoint provided by WorldNews API. This is critical for ensuring that the news fetched is geographically relevant.
+
+2. News Gathering: Fetches news headlines based on the city's geolocation and predefined criteria such as the number of news items, language, and the radius from the city center. 
+
+3. Trending Topics Extraction Using LLM: We generate a prompt for the OpenAI model by listing the fetched news headlines. This prompt is designed to guide the AI in identifying the most relevant topics from the headlines. We then submit the constructed prompt to the OpenAI model and then process the response from Open AI model to extract a list of the top 5 trending topics. 
+
+### Task-2 (Gather relevant discussions):
+
+Here, we gather relevant discussions happening on trending topics extracted in task-1 from social media. 
+
+Steps Involved:
+
+1. Discussion Gathering: Fetches Reddit submissions based on a search keyword. We store title, content and comment of each reedit submission for futher analysis. While fetching comments, we build a comment chain for each comment that includes all the parent comments for a comment, to maintain the context of each comment. 
+2. Content Summarization: For lengthy submission texts, a summarization prompt is created and sent to OpenAI's model to obtain a concise version of the submission content, making it easier to analyze and understand.
+3. Viewpoint Generation: For each comment chain, a prompt is constructed that includes the submission's title and content along with the hierarchical comments. This prompt is used to generate a sentence representing the viewpoint of the last comment in the chain, considering the context provided by the submission and preceding comments.
+
+### Task-3 (Analyze gathered information)
+
+It analyzes all the gathered information. i have done three major analysis of the gathered information:
+1. Summarization: Summarized the information in all the discussion gathered for a specific topic, also summarized information
+gathered in each discussion.
+
+2. Sentiment analysis of discussion points: For each discussion gathered for a topic, I have summarized sentiment information indicating what percentage of discussions have positive, negative and neutral sentiment. The information is presented in the frontend using a pie chart.
+
+3. Organizing discussion points with similar viewpoints and getting count of discussion points in each cluster. The information is presented in the frontend using a bar chart.
+
+### Task-4(Build a small front-end to display your analyzed information)
+
+For this I have built a frontend using HTML, CSS and JavaScript which takes the city name as input and sends a request to
+backend server made using FastAPI to fetch the required information.
+
+To minimize redundant data processing,the system uses JSON files stored in a data directory for caching information about cities, topics, and discussions. When a request for topics in a city is received, the system checks if the data is already cached. If not, or if the data is outdated (older than a week), it triggers the data gathering and analysis process.
+
 ## Installation
 
 Before you begin, make sure you have `Python 3.8+` installed on your system
