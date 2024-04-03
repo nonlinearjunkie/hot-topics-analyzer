@@ -121,6 +121,7 @@ class TopicsExtractor:
 
         lines = openai_resp.split("\n")
         for line in lines:
+            line=line.replace("/","")
             topics.append(json.loads(line[3:]))
 
         return topics

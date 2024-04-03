@@ -117,7 +117,10 @@ class GatherDiscussions:
             if submission.selftext:
                 submission_details = {}
 
-                submission_details["title"] = submission.title
+                submission_title=submission.title
+                submission_title=submission_title.replace("/","")
+
+                submission_details["title"] = submission_title
                 submission_details["discussion_points"] = []
                 if (len(submission.selftext)>500):
                     post_summarizer_prompt = self.get_summarize_prompt(submission.selftext)
