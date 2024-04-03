@@ -1,40 +1,11 @@
-document.getElementById('fetchButton').addEventListener('click', async function() {
-    const city = document.getElementById('cityInput').value;
-    const dropdown = document.getElementById('trendingTopicsDropdown');
-    const dropdownContainer = document.getElementById('dropdownContainer');
-    const noTopicsMessage = document.getElementById('noTopicsMessage'); // New line
-
-    try {
-        const response = await fetch(`http://127.0.0.1:8000/get-topics/${city}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-
-        if (data.trending_topics && data.trending_topics.length > 0) {
-            dropdown.length = 1; 
-            data.trending_topics.forEach(topic => {
-                const option = new Option(topic, topic);
-                dropdown.add(option);
-            });
-            dropdownContainer.classList.remove('hidden'); 
-            noTopicsMessage.classList.add('hidden'); 
-        } else {
-            dropdownContainer.classList.add('hidden'); 
-            noTopicsMessage.classList.remove('hidden'); 
-        }
-    } catch (error) {
-        console.error('Error fetching topics:', error);
-        dropdownContainer.classList.add('hidden');
-        
-        noTopicsMessage.classList.remove('hidden'); 
-        noTopicsMessage.textContent = 'Error fetching topics.'; 
-    }
-});
-
 document.getElementById('fetchButton').addEventListener('click', fetchTopics);
 
 async function fetchTopics() {
+    console.log("Request sent to backend")
+    // Get the Fetch Topics button and disable it
+    const fetchButton = document.getElementById('fetchButton');
+    fetchButton.disabled = true;
+
     const city = document.getElementById('cityInput').value;
     const dropdown = document.getElementById('trendingTopicsDropdown');
     const dropdownContainer = document.getElementById('dropdownContainer');
@@ -42,7 +13,6 @@ async function fetchTopics() {
     const detailsButton = document.getElementById('detailsButton');
     const topicDetailsDiv = document.getElementById('topicDetails');
     const discussionDetailsDiv = document.getElementById('discussionDetails');
-
 
     detailsButton.classList.add('hidden');
 
@@ -59,23 +29,26 @@ async function fetchTopics() {
                 const option = new Option(topic, topic);
                 dropdown.add(option);
             });
-            dropdownContainer.classList.remove('hidden'); // Unhide dropdown
-            noTopicsMessage.classList.add('hidden'); // Ensure no topics message is hidden
+            dropdownContainer.classList.remove('hidden'); 
+            noTopicsMessage.classList.add('hidden'); 
             topicDetailsDiv.classList.add("hidden");
             discussionDetailsDiv.classList.add("hidden");
         } else {
-            dropdownContainer.classList.add('hidden'); // Hide dropdown
-            noTopicsMessage.classList.remove('hidden'); // Display no topics message
+            dropdownContainer.classList.add('hidden'); 
+            noTopicsMessage.classList.remove('hidden'); 
             topicDetailsDiv.classList.add("hidden");
             discussionDetailsDiv.classList.add("hidden");
         }
     } catch (error) {
         console.error('Error fetching topics:', error);
         dropdownContainer.classList.add('hidden');
-        noTopicsMessage.classList.remove('hidden'); // Display no topics message in case of error as well
+        noTopicsMessage.classList.remove('hidden'); 
         topicDetailsDiv.classList.add("hidden");
         discussionDetailsDiv.classList.add("hidden");
-        noTopicsMessage.textContent = 'Error fetching topics.'; // Custom error message
+        noTopicsMessage.textContent = 'Error fetching topics.';
+    } finally {
+        // Re-enable the Fetch Topics button whether the fetch was successful or failed
+        fetchButton.disabled = false;
     }
 }
 
